@@ -10,7 +10,11 @@ function drawField() {
         let bufer: TextSprite[] = []
         for( let j = 0; j < field[0].length; j++) {
             let x = xys.x + j * xys.s
-            let c = field[i][j] == "." ? "" : field[i][j]
+            let c = ''
+            if (field[i][j] != ".") {
+                c = field[i][j]
+                total += 1
+            }
             let textSprite = textsprite.create(c)
             textSprite.setPosition(x, y)
             textSprite.setMaxFontHeight(8)
@@ -19,6 +23,7 @@ function drawField() {
         }
         sp.push(bufer)
     }
+    total /= 2
 }
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
@@ -57,15 +62,61 @@ function keys(dx: number, dy: number, dir: string) {
             return
         }
     } 
-    if (check(dx, dy) == null) {
+    if (check(dx, dy) == null && (dir == 'A' || !checkUsed(dx, dy))) {
         makeTile(pos.row, pos.col, dir)
-        mark = (dir == 'A')
+        if( dir == 'A') mark = true
+        else {
+            helper.say(used())
+            total--
+            if (total == 0) {
+                pause(2000)
+                game.over(true)
+            }
+        }
     }
+}
+
+function checkUsed(dx: number, dy: number) {
+    dx *= xys.s
+    dy *= xys.s
+    let pos = cr(cur.x + dx, cur.y + dy)
+    let posCur = cr(cur.x, cur.y)
+    let value1 = sp[posCur.row][posCur.col].text
+    let value2 = sp[pos.row][pos.col].text
+    for (let u of sprites.allOfKind(SpriteKind.Brick)) {
+        let v1 = u.data.value1
+        let v2 = u.data.value2
+        if( v1 == v2 )
+          if( v1 == value1 && v1 == value2) return true
+        
+        if ((v1 == value1 || v1 == value2) &&
+            (v2 == value1 || v2 == value2) &&
+            (v1 != v2) && (value1 != value2)) return true
+    }
+    return false       
+}
+
+function used() {
+    let t = ''
+    let pos = cr(cur.x, cur.y)
+    let value = sp[pos.row] [pos.col].text
+    for (let u of sprites.allOfKind(SpriteKind.Brick)) {
+        if( u.data.value1 == value)
+            t += u.data.value2
+        else if (u.data.value2 == value)
+            t += u.data.value1
+    } 
+    if (t.length > 0) {
+        info.player1.setScore(total)
+        return value + ': ' + t.split("").sort().join("")
+    } else return ''
 }
 
 function check(dx: number, dy: number){
     dx *= xys.s
     dy *= xys.s
+    let pos = cr(cur.x + dx, cur.y + dy)
+    if (sp[pos.row][pos.col].text == "") return last
     for (let u of sprites.allOfKind(SpriteKind.Brick)) {
         if (u.top < cur.y + dy && u.bottom > cur.y +dy 
          && u.left < cur.x + dx && u.right > cur.x + dx) 
@@ -81,6 +132,7 @@ const field = ["....45....", "...3416...", "...4364...", ".33050626.", "10642040
     "0154232351", ".35122600.", "...1314...", "...5655...", "....22...."]
 const xys = {x: 12, y: 5, s: 12}
 let sp: TextSprite[][]
+let total = -2
 drawField()
 let countTail = 0
 let mark = false
@@ -203,14 +255,12 @@ function makeTile(row: number, col: number, dir?: string) {
                 f f f f f f f f f f f
                 f f f f f f f f f f f
                 f f f f f f f f f f f
-                f f f f f f f f f f f
             `, SpriteKind.Player)
             my.setPosition(x + 1, y - xys.s / 2 + 1)
             dy--
             break
         case "down":
             my = sprites.create(img`
-                f f f f f f f f f f f
                 f f f f f f f f f f f
                 f f f f f f f f f f f
                 f f f f f f f f f f f
@@ -256,6 +306,6 @@ function makeTile(row: number, col: number, dir?: string) {
     }
     my.z = -1
     my.setKind(SpriteKind.Brick)
-    my.data = { value1: sp[col][row].text, value2: sp[col + dx][row + dy].text, count: countTail }
+    my.data = { value1: sp[row][col].text, value2: sp[row + dy][col + dx].text, count: countTail }
     countTail++
 }
