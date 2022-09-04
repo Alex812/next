@@ -13,7 +13,6 @@ function drawField() {
             let c = ''
             if (field[i][j] != ".") {
                 c = field[i][j]
-                total += 1
             }
             let textSprite = textsprite.create(c)
             textSprite.setPosition(x, y)
@@ -23,7 +22,6 @@ function drawField() {
         }
         sp.push(bufer)
     }
-    total /= 2
 }
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
@@ -66,9 +64,8 @@ function keys(dx: number, dy: number, dir: string) {
         makeTile(pos.row, pos.col, dir)
         if( dir == 'A') mark = true
         else {
-            helper.say(used())
-            total--
-            if (total == 0) {
+        
+            if (sprites.allOfKind(SpriteKind.Brick).length == 28) {
                 pause(2000)
                 game.over(true)
             }
@@ -96,21 +93,6 @@ function checkUsed(dx: number, dy: number) {
     return false       
 }
 
-function used() {
-    let t = ''
-    let pos = cr(cur.x, cur.y)
-    let value = sp[pos.row] [pos.col].text
-    for (let u of sprites.allOfKind(SpriteKind.Brick)) {
-        if( u.data.value1 == value)
-            t += u.data.value2
-        else if (u.data.value2 == value)
-            t += u.data.value1
-    } 
-    if (t.length > 0) {
-        info.player1.setScore(total)
-        return value + ': ' + t.split("").sort().join("")
-    } else return ''
-}
 
 function check(dx: number, dy: number){
     dx *= xys.s
@@ -130,33 +112,12 @@ function check(dx: number, dy: number){
 scene.setBackgroundColor(1)
 const field = ["....45....", "...3416...", "...4364...", ".33050626.", "1064204061", 
     "0154232351", ".35122600.", "...1314...", "...5655...", "....22...."]
-const xys = {x: 12, y: 5, s: 12}
+const xys = {x: 24, y: 5, s: 12}
 let sp: TextSprite[][]
-let total = -2
 drawField()
 let countTail = 0
 let mark = false
 let last: Sprite = null
-let helper = sprites.create(img`
-    . . . . . f f f f . . . . .
-    . . . f f 5 5 5 5 f f . . .
-    . . f 5 5 5 5 5 5 5 5 f . .
-    . f 5 5 5 5 5 5 5 5 5 5 f .
-    . f 5 5 5 d b b d 5 5 5 f .
-    f 5 5 5 b 4 4 4 4 b 5 5 5 f
-    f 5 5 c c 4 4 4 4 c c 5 5 f
-    f b b f b f 4 4 f b f b b f
-    f b b 4 1 f d d f 1 4 b b f
-    . f b f d d d d d d f b f .
-    . f e f e 4 4 4 4 e f e f .
-    . e 4 f 6 9 9 9 9 6 f 4 e .
-    . 4 d c 9 9 9 9 9 9 c d 4 .
-    . 4 f b 3 b 3 b 3 b b f 4 .
-    . . f f 3 b 3 b 3 3 f f . .
-    . . . . f f b b f f . . . .
-`, SpriteKind.Player)
-helper.setPosition(xy(9, 9).x + 1, xy(9, 9).y - 1)
-helper.sayText('Hi')
 const cur = sprites.create(img`
     . . . . . . . . . . . . . . . .
     . . . . . . 1 8 8 1 . . . . . .
